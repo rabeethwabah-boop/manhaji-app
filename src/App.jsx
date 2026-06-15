@@ -1,188 +1,257 @@
 import React, { useState } from 'react';
+// استيراد قاعدة البيانات الجديدة التي رتبها مانوس
+import booksData from './booksData_Complete.json';
 
-function App() {
-  // بيانات تجريبية للصفوف والمواد البرمجية لتطبيق "مكتبتي التعليمي"
-  const [selectedStage, setSelectedStage] = useState('ثانوي');
+const App = () => {
+  const [selectedStage, setSelectedStage] = useState(null);
+  const [selectedGrade, setSelectedGrade] = useState(null);
+  const [navigationStack, setNavigationStack] = useState(['home']);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [showContact, setShowContact] = useState(false);
 
-  const subjects = [
-    { id: 1, name: 'الرياضيات', icon: '📐', count: '12 ملف' },
-    { id: 2, name: 'الفيزياء', icon: '⚡', count: '8 ملفات' },
-    { id: 3, name: 'الكيمياء', icon: '🧪', count: '10 ملفات' },
-    { id: 4, name: 'اللغة العربية', icon: '📚', count: '15 ملف' },
-    { id: 5, name: 'اللغة الإنجليزية', icon: '🗣️', count: '9 ملفات' },
-    { id: 6, name: 'الأحياء', icon: '🌱', count: '7 ملفات' },
+  // الحفاظ على المراحل الـ 4 وألوانها المعتمدة في تطبيقك
+  const stages = [
+    { name: 'الابتدائية', color: '#FF6B6B', key: 'الابتدائية' },
+    { name: 'الأساسية', color: '#4ECDC4', key: 'الأساسية' },
+    { name: 'الإعدادية', color: '#45B7D1', key: 'الإعدادية' },
+    { name: 'الثانوية', color: '#96CEB4', key: 'الثانوية' },
   ];
 
+  const handleStageSelect = (stageKey) => {
+    setSelectedStage(stageKey);
+    setSelectedGrade(null);
+    setNavigationStack(['home', stageKey]);
+  };
+
+  const handleGradeSelect = (grade) => {
+    setSelectedGrade(grade);
+    setNavigationStack(['home', selectedStage, grade]);
+  };
+
+  // زر الرجوع الذكي للخلف
+  const handleGoBack = () => {
+    if (navigationStack.length > 1) {
+      const newStack = navigationStack.slice(0, -1);
+      setNavigationStack(newStack);
+      
+      if (newStack.length === 1) {
+        setSelectedStage(null);
+        setSelectedGrade(null);
+      } else if (newStack.length === 2) {
+        setSelectedGrade(null);
+        setSelectedStage(newStack[1]);
+      }
+    }
+  };
+
+  // دالة تنظيف أسماء الكتب من الامتداد والشرطات لتبدو جميلة للمستخدم
+  const cleanBookName = (name) => {
+    return name
+      .replace('.pdf', '')
+      .replace(/_/g, ' ')
+      .replace('كتاب', '')
+      .trim();
+  };
+
+  // جلب الصفوف المتاحة للمرحلة المحددة (تجنب الانهيار إذا كانت المرحلة فارغة كالإبتدائية)
+  const availableGrades = selectedStage && booksData[selectedStage] 
+    ? Object.keys(booksData[selectedStage]) 
+    : [];
+
+  // جلب الكتب المتاحة للصف المحدد (مع حزام أمان تجنباً للانهيار)
+  const availableBooks = selectedStage && selectedGrade && booksData[selectedStage]?.[selectedGrade]
+    ? booksData[selectedStage][selectedGrade]
+    : [];
+
   return (
-    <div style={styles.container}>
-      {/* الهيدر أو شريط العناوين العلوي */}
-      <header style={styles.header}>
-        <div style={styles.logoContainer}>
-          <span style={styles.logoIcon}>📖</span>
-          <h1 style={styles.logoText}>مكتبتي التعليمية</h1>
+    <div style={{
+      fontFamily: 'Cairo, sans-serif',
+      direction: 'rtl',
+      minHeight: '100vh',
+      backgroundColor: '#f5f7fb',
+      padding: '20px'
+    }}>
+      {/* الهيدر العلوي لشريط التطبيق */}
+      <header style={{
+        display: 'flex',
+        justifyContent: 'between',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        padding: '15px 30px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+        marginBottom: '30px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {navigationStack.length > 1 && (
+            <button onClick={handleGoBack} style={{
+              padding: '8px 15px',
+              backgroundColor: '#e2e8f0',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}>🔙 عودة</button>
+          )}
+          <h1 style={{ color: '#2d3748', margin: 0, fontSize: '24px' }}>📚 تطبيق مَنهَجي</h1>
         </div>
-        <p style={styles.subtitle}>منصتك الشاملة للمناهج الدراسية، الملخصات، والاختبارات</p>
+        
+        <nav style={{ display: 'flex', gap: '15px' }}>
+          <button onClick={() => setShowAbout(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4a5568' }}>من نحن</button>
+          <button onClick={() => setShowContact(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4a5568' }}>تواصل معنا</button>
+        </nav>
       </header>
 
-      {/* أزرار اختيار المرحلة الدراسية */}
-      <div style={styles.tabsContainer}>
-        <button 
-          style={{...styles.tabButton, ...(selectedStage === 'أساسي' ? styles.activeTab : {})}}
-          onClick={() => setSelectedStage('أساسي')}
-        >
-          التعليم الأساسي (الابتدائي/الإعدادي)
-        </button>
-        <button 
-          style={{...styles.tabButton, ...(selectedStage === 'ثانوي' ? styles.activeTab : {})}}
-          onClick={() => setSelectedStage('ثانوي')}
-        >
-          التعليم الثانوي
-        </button>
-      </div>
-
-      {/* قسم عرض المواد الدراسية */}
-      <main style={styles.mainContent}>
-        <h2 style={styles.sectionTitle}>المواد الدراسية المتاحة لـ (القسم ال{selectedStage})</h2>
-        
-        <div style={styles.grid}>
-          {subjects.map((subject) => (
-            <div key={subject.id} style={styles.card}>
-              <div style={styles.cardIcon}>{subject.icon}</div>
-              <h3 style={styles.cardTitle}>{subject.name}</h3>
-              <p style={styles.cardCount}>{subject.count}</p>
-              <button style={styles.cardButton}>تصفح الكتب والملخصات</button>
-            </div>
-          ))}
+      {/* الشاشة الرئيسية: اختيار المرحلة */}
+      {!selectedStage && (
+        <div>
+          <h2 style={{ textWith: 'center', marginBottom: '20px', color: '#4a5568' }}>اختر المرحلة الدراسية:</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+            {stages.map((stage) => (
+              <div
+                key={stage.key}
+                onClick={() => handleStageSelect(stage.key)}
+                style={{
+                  backgroundColor: stage.color,
+                  color: 'white',
+                  padding: '40px 20px',
+                  borderRadius: '15px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                  transition: 'transform 0.2s'
+                }}
+              >
+                {stage.name}
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
+      )}
 
-      {/* تذييل الصفحة */}
-      <footer style={styles.footer}>
-        <p>جميع الحقوق محفوظة © {new Date().getFullYear()} - تطبيق مكتبتي التعليمي</p>
-      </footer>
+      {/* الشاشة الثانية: اختيار الصف الدراسي */}
+      {selectedStage && !selectedGrade && (
+        <div>
+          <h2 style={{ marginBottom: '20px', color: '#4a5568' }}>المرحلة: {selectedStage} - اختر الصف:</h2>
+          {availableGrades.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#a0aec0', fontSize: '18px' }}>جاري تجهيز كتب هذه المرحلة قريباً... 🛠️</p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px' }}>
+              {availableGrades.map((grade) => (
+                <button
+                  key={grade}
+                  onClick={() => handleGradeSelect(grade)}
+                  style={{
+                    padding: '20px',
+                    backgroundColor: 'white',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    color: '#2d3748'
+                  }}
+                >
+                  {grade}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* الشاشة الثالثة: عرض الكتب ومطابقتها الصحيحة بدون انهيار */}
+      {selectedStage && selectedGrade && (
+        <div>
+          <h2 style={{ marginBottom: '20px', color: '#4a5568' }}>كتب {selectedGrade} ({selectedStage}):</h2>
+          {availableBooks.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#a0aec0' }}>لم يتم العثور على كتب مضافة لهذا الصف حالياً.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {availableBooks.map((book, index) => {
+                // 1. رابط التحميل المباشر للكتب
+                const downloadUrl = `https://drive.google.com/uc?export=download&id=${book.id}`;
+                
+                // 2. رابط العرض والقراءة في متصفح جوجل درايف مباشرة بدون تحميل
+                const previewUrl = `https://drive.google.com/file/d/${book.id}/view?usp=sharing`;
+                
+                return (
+                  <div key={index} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: 'white',
+                    padding: '15px 20px',
+                    borderRadius: '10px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                  }}>
+                    <span style={{ fontSize: '16px', fontWeight: '500', color: '#2d3748' }}>
+                      📖 {cleanBookName(book.name)}
+                    </span>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <a
+                        href={previewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#4a5568',
+                          color: 'white',
+                          textDecoration: 'none',
+                          borderRadius: '6px',
+                          fontSize: '14px'
+                        }}
+                      >
+                        👁️ قراءة
+                      </a>
+                      <a
+                        href={downloadUrl}
+                        download
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#319795',
+                          color: 'white',
+                          textDecoration: 'none',
+                          borderRadius: '6px',
+                          fontSize: '14px'
+                        }}
+                      >
+                        📥 تحميل
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* قوالب النوافذ المنبثقة (Modals) الشائعة للحفاظ على واجهتك */}
+      {showAbout && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '10px', maxWidth: '500px', width: '90%' }}>
+            <h2>تطبيق مَنهَجي</h2>
+            <p>تطبيق يمني يهدف لتوفير المناهج الدراسية لجميع الصفوف بسهولة ويسر وبأعلى جودة برمجية.</p>
+            <button onClick={() => setShowAbout(false)} style={{ padding: '8px 16px', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>إغلاق</button>
+          </div>
+        </div>
+      )}
+
+      {showContact && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '10px', maxWidth: '500px', width: '90%' }}>
+            <h2>تواصل معنا</h2>
+            <p>البريد الإلكتروني المطور: support@manhaji.com</p>
+            <button onClick={() => setShowContact(false)} style={{ padding: '8px 16px', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>إغلاق</button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-// تنسيقات سريعة وجميلة متوافقة مع القراءة من اليمين لليسان (RTL)
-const styles = {
-  container: {
-    fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
-    direction: 'rtl',
-    backgroundColor: '#f4f7f6',
-    color: '#333',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  header: {
-    backgroundColor: '#2c3e50',
-    color: '#fff',
-    padding: '40px 20px',
-    textAlign: 'center',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-  },
-  logoContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '15px',
-    marginBottom: '10px',
-  },
-  logoIcon: {
-    fontSize: '2.5rem',
-  },
-  logoText: {
-    fontSize: '2.5rem',
-    margin: 0,
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: '1.1rem',
-    opacity: 0.9,
-    margin: 0,
-  },
-  tabsContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '20px',
-    margin: '30px 0 10px 0',
-  },
-  tabButton: {
-    padding: '12px 24px',
-    fontSize: '1rem',
-    border: '2px solid #2c3e50',
-    borderRadius: '25px',
-    backgroundColor: '#fff',
-    color: '#2c3e50',
-    cursor: 'pointer',
-    transition: '0.3s',
-    fontWeight: 'bold',
-  },
-  activeTab: {
-    backgroundColor: '#2c3e50',
-    color: '#fff',
-  },
-  mainContent: {
-    flex: 1,
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '20px',
-    width: '100%',
-  },
-  sectionTitle: {
-    textAlign: 'center',
-    color: '#2c3e50',
-    marginBottom: '30px',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-    gap: '25px',
-    padding: '10px',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '25px',
-    textAlign: 'center',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-    transition: 'transform 0.3s',
-    borderTop: '5px solid #3498db',
-  },
-  cardIcon: {
-    fontSize: '3rem',
-    marginBottom: '15px',
-  },
-  cardTitle: {
-    fontSize: '1.4rem',
-    margin: '0 0 10px 0',
-    color: '#2c3e50',
-  },
-  cardCount: {
-    color: '#7f8c8d',
-    fontSize: '0.9rem',
-    marginBottom: '20px',
-  },
-  cardButton: {
-    backgroundColor: '#3498db',
-    color: '#fff',
-    border: 'none',
-    padding: '10px 20px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    width: '100%',
-    transition: '0.2s',
-  },
-  footer: {
-    textAlign: 'center',
-    padding: '20px',
-    backgroundColor: '#2c3e50',
-    color: '#fff',
-    fontSize: '0.9rem',
-    marginTop: '40px',
-  }
 };
 
-export default App; 
+export default App;

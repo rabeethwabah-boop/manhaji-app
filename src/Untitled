@@ -1,0 +1,173 @@
+import React, { useState, useMemo } from 'react';
+import booksData from './booksData.json'; // استدعاء ملف البيانات المصلح في نفس المجلد
+
+export default function BooksList() {
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedGrade, setSelectedGrade] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // 1. استخراج المراحل الدراسية تلقائياً
+  const categories = useMemo(() => {
+    const unique = new Set(booksData.map(book => book.category).filter(Boolean));
+    return ['all', ...Array.from(unique)];
+  }, []);
+
+  // 2. استخراج الصفوف الدراسية بناءً على المرحلة المختارة
+  const grades = useMemo(() => {
+    let filtered = booksData;
+    if (selectedCategory !== 'all') {
+      filtered = booksData.filter(book => book.category === selectedCategory);
+    }
+    const uniqueGrades = new Set(filtered.map(book => book.gradeDisplay).filter(Boolean));
+    return Array.from(uniqueGrades);
+  }, [selectedCategory]);
+
+  // 3. تصفية الكتب النهائية بناءً على المرحلة والصف والبحث
+  const filteredBooks = useMemo(() => {
+    return booksData.filter(book => {
+      const matchCategory = selectedCategory === 'all' || book.category === selectedCategory;
+      const matchGrade = !selectedGrade || book.gradeDisplay === selectedGrade;
+      const matchSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchCategory && matchGrade && matchSearch;
+    });
+  }, [selectedCategory, selectedGrade, searchQuery]);
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    setSelectedGrade(''); 
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans" dir="rtl">
+      
+      {/* الهيدر الرئيسي للتطبيق باللون الأخضر الغامق والبرتقالي */}
+      <header className="text-center mb-8 bg-emerald-900 text-white p-6 rounded-2xl shadow-lg border-b-4 border-orange-500">
+        <h1 className="text-3xl md:text-4xl font-black mb-2">📚 تطبيق مَـنْـهَـجِـي</h1>
+        <p className="text-emerald-100 text-sm md:text-base">بوابتك الذكية للمناهج الدراسية اليمنية لجميع المراحل</p>
+      </header>
+
+      {/* أولاً: المراحل الدراسية الكبرى */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <h2 className="text-lg font-bold text-emerald-950 mb-3 flex items-center gap-2">
+          <span className="w-2 h-6 bg-orange-500 rounded-full"></span>
+          اختر المرحلة الدراسية:
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleCategoryChange(cat)}
+              className={`px-6 py-3 rounded-xl font-bold text-sm md:text-base transition-all duration-200 shadow-sm ${
+                selectedCategory === cat
+                  ? 'bg-orange-500 text-white shadow-orange-200 ring-2 ring-orange-600'
+                  : 'bg-emerald-900 text-white hover:bg-emerald-800'
+              }`}
+            >
+              {cat === 'all' ? '📊 كل المراحل' : `🏫 المرحلة ال${cat}`}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ثانياً: مربعات الصفوف الدراسية */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <h2 className="text-lg font-bold text-emerald-950 mb-3 flex items-center gap-2">
+          <span className="w-2 h-6 bg-orange-500 rounded-full"></span>
+          اختر الصف الدراسي:
+        </h2>
+        {grades.length === 0 ? (
+          <p className="text-gray-500 text-sm bg-white p-4 rounded-xl border border-gray-200">الرجاء اختيار مرحلة لعرض صفوفها...</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <button
+              onClick={() => setSelectedGrade('')}
+              className={`p-4 rounded-xl font-bold border-2 text-center transition-all ${
+                selectedGrade === ''
+                  ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-md'
+                  : 'border-emerald-800/20 bg-white text-emerald-900 hover:border-emerald-800 hover:bg-emerald-50/50'
+              }`}
+            >
+              <div className="text-xl mb-1">📋</div>
+              <div className="text-xs md:text-sm">كل صفوف المرحلة</div>
+            </button>
+
+            {grades.map((grade) => (
+              <button
+                key={grade}
+                onClick={() => setSelectedGrade(grade)}
+                className={`p-4 rounded-xl font-bold border-2 text-center transition-all ${
+                  selectedGrade === grade
+                    ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-md ring-1 ring-orange-400'
+                    : 'border-emerald-800/20 bg-white text-emerald-900 hover:border-emerald-800 hover:bg-emerald-50/50'
+                }`}
+              >
+                <div className="text-xl mb-1">📑</div>
+                <div className="text-xs md:text-sm">{grade}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ثالثاً: شريط البحث السريع */}
+      <div className="max-w-6xl mx-auto mb-6">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="🔍 ابحث عن كتاب معين (مثال: علوم، رياضيات، صنعاء...)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-4 pr-12 rounded-xl border-2 border-emerald-900/20 focus:border-emerald-800 focus:outline-none bg-white shadow-sm text-sm"
+          />
+        </div>
+      </div>
+
+      {/* رابعاً: عرض شبكة الكتب */}
+      <main className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-black text-emerald-900">
+            📚 الكتب المتاحة ({filteredBooks.length})
+          </h3>
+        </div>
+
+        {filteredBooks.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+            <span className="text-4xl">📭</span>
+            <p className="text-gray-500 mt-2 font-medium">لم يتم العثور على كتب تطابق هذا الاختيار.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredBooks.map((book) => (
+              <div 
+                key={book.id} 
+                className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4 flex flex-col justify-between group hover:border-emerald-800/30"
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="bg-emerald-50 text-emerald-800 text-[11px] px-2 py-0.5 rounded font-semibold">
+                      {book.gradeDisplay}
+                    </span>
+                    <span className="text-gray-400 text-xs font-mono">#{book.id}</span>
+                  </div>
+                  <h4 className="font-bold text-gray-800 text-sm md:text-base leading-relaxed mb-4 group-hover:text-emerald-900 transition-colors">
+                    {book.title}
+                  </h4>
+                </div>
+
+                <a
+                  href={book.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-lg text-center text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <span>📖 قراءة وتحميل الكتاب</span>
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+    </div>
+  );
+}
