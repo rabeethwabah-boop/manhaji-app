@@ -1,10 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-// ملاحظة: تأكد من تمرير خصائص الوضع الليلي إذا كنت تستخدمها (مثل isDarkMode و toggleTheme)
-const Header = ({ setShowAbout, setShowContact, isDarkMode, toggleTheme }) => {
+const Header = ({ setShowAbout, setShowContact }) => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const navigate = useNavigate();
+  
+  // حالة الوضع الليلي (يقرأ الحالة من ذاكرة المتصفح ليتذكر اختيار المستخدم)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('theme') === 'dark';
+  });
+
+  // تفعيل الكلاس الخاص بالوضع الليلي عند تغير الحالة
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  // دالة تبديل الوضع (ليلي / نهاري)
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+  };
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
@@ -22,7 +42,7 @@ const Header = ({ setShowAbout, setShowContact, isDarkMode, toggleTheme }) => {
   const handleInstallClick = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt(); 
-      deferredPrompt.userChoice.then((choiceResult) => {
+      deferredPrompt.userChoice.then(() => {
         setDeferredPrompt(null); 
       });
     }
@@ -39,7 +59,7 @@ const Header = ({ setShowAbout, setShowContact, isDarkMode, toggleTheme }) => {
       {/* مجموعة الأزرار */}
       <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
         
-        {/* زر التثبيت (يظهر فقط إذا كان متاحاً) */}
+        {/* زر التثبيت */}
         {deferredPrompt && (
           <button 
             onClick={handleInstallClick} 
@@ -62,16 +82,14 @@ const Header = ({ setShowAbout, setShowContact, isDarkMode, toggleTheme }) => {
           ❤️
         </button>
 
-        {/* زر الوضع الليلي (تأكد من توافقه مع منطق الـ App.jsx لديك) */}
-        {toggleTheme && (
-           <button 
-             onClick={toggleTheme} 
-             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}
-             title="تبديل الوضع"
-           >
-             {isDarkMode ? '☀️' : '🌙'}
-           </button>
-        )}
+        {/* زر الوضع الليلي (مستقل ويعمل بكفاءة) */}
+        <button 
+          onClick={toggleTheme} 
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}
+          title="تبديل الوضع"
+        >
+          {isDarkMode ? '☀️' : '🌙'}
+        </button>
 
         <button onClick={() => setShowAbout(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-darkGray)', fontWeight: 'bold' }}>حول</button>
         <button onClick={() => setShowContact(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-darkGray)', fontWeight: 'bold' }}>تواصل</button>
