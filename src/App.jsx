@@ -1,5 +1,6 @@
 // src/App.jsx
 import React, { useState } from 'react';
+import './index.css'; /* 👈 السطر الذي تم إضافته لربط الألوان بالتطبيق */
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 
