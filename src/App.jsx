@@ -1,7 +1,8 @@
 // src/App.jsx
-import React, { useState } from 'react';
-import './index.css'; /* 👈 السطر الذي تم إضافته لربط الألوان بالتطبيق */
-import { Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import './index.css';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { App as CapacitorApp } from '@capacitor/app'; // مكتبة التحكم بأزرار الهاتف
 import Header from './components/Header';
 
 // استدعاء الصفحات
@@ -16,10 +17,46 @@ const App = () => {
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
 
+  // أدوات لمعرفة مكان المستخدم الحالي ونقله
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ----------------------------------------------------
+  // الكود السحري للتحكم بزر الرجوع في نظام الأندرويد
+  // ----------------------------------------------------
+  useEffect(() => {
+    const handleBackButton = async () => {
+      CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+        // إذا كنا في الصفحة الرئيسية
+        if (location.pathname === '/') {
+          // إذا كانت أي نافذة منبثقة مفتوحة، أغلقها فقط ولا تخرج من التطبيق
+          if (showAbout || showContact) {
+            setShowAbout(false);
+            setShowContact(false);
+          } else {
+            // إذا لم يكن هناك شيء مفتوح ونحن في الرئيسية، اخرج من التطبيق
+            CapacitorApp.exitApp();
+          }
+        } else {
+          // إذا كنا في أي صفحة أخرى (كتاب، صفوف، بحث)، ارجع خطوة واحدة للخلف
+          navigate(-1);
+        }
+      });
+    };
+
+    handleBackButton();
+
+    // تنظيف الحدث لعدم تكرار الأوامر
+    return () => {
+      CapacitorApp.removeAllListeners();
+    };
+  }, [location.pathname, navigate, showAbout, showContact]);
+  // ----------------------------------------------------
+
   return (
     <div style={{ 
       fontFamily: 'Cairo, sans-serif', direction: 'rtl', minHeight: '100vh', 
-      backgroundColor: 'var(--bg-lightGray)', /* التعديل السحري لتفعيل الوضع الليلي للخلفية */
+      backgroundColor: 'var(--bg-lightGray)', 
       color: 'var(--text-darkGray)',
       padding: '20px',
       transition: 'background-color 0.3s, color 0.3s'
@@ -36,7 +73,7 @@ const App = () => {
         <Route path="/favorites" element={<Favorites />} />
       </Routes>
 
-      {/* النوافذ المنبثقة (About & Contact) متوافقة مع الوضع الليلي */}
+      {/* النوافذ المنبثقة */}
       {showAbout && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(3px)' }}>
           <div style={{ backgroundColor: 'var(--bg-white)', color: 'var(--text-darkGray)', padding: '30px', borderRadius: '16px', maxWidth: '500px', width: '90%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
@@ -64,4 +101,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default App; 

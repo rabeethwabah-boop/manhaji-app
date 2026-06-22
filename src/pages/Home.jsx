@@ -9,7 +9,7 @@ const Home = () => {
   return (
     <div>
       <h2 style={{ textAlign: 'center', marginBottom: '30px', color: 'var(--text-darkGray)', transition: 'color 0.3s' }}>
-        اختر المرحلة الدراسية:
+
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', padding: '10px' }}>
         {stages.map((stage) => (
