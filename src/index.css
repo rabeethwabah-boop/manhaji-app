@@ -1,24 +1,27 @@
 /* src/index.css */
 :root {
-    /* ألوان الوضع الفاتح الافتراضي */
-    --bg-white: #FFFFFF;
-    --bg-lightGray: #F5F7FB;
-    --text-darkGray: #2d3748;
-    --border-gray: #e2e8f0;
-  }
+  /* ألوان الوضع الفاتح الافتراضي */
+  --bg-white: #FFFFFF;
+  --bg-lightGray: #F5F7FB;
+  --text-darkGray: #2d3748;
+  --border-gray: #e2e8f0;
+}
   
-  [data-theme="dark"] {
-    /* ألوان الوضع الليلي */
-    --bg-white: #2d3748;      /* البطاقات والهيدر تصبح رمادية داكنة */
-    --bg-lightGray: #1a202c;  /* خلفية التطبيق تصبح سوداء قريبة للرمادي */
-    --text-darkGray: #e2e8f0; /* النصوص تصبح بيضاء ساطعة */
-    --border-gray: #4a5568;   /* حدود خفيفة */
-  }
+/* تم التعديل هنا ليتوافق تماماً مع زر الهلال والشمس */
+[data-theme="dark"],
+html.dark, 
+.dark {
+  /* ألوان الوضع الليلي */
+  --bg-white: #2d3748 !important;      /* البطاقات والهيدر تصبح رمادية داكنة */
+  --bg-lightGray: #1a202c !important;  /* خلفية التطبيق تصبح سوداء قريبة للرمادي */
+  --text-darkGray: #e2e8f0 !important; /* النصوص تصبح بيضاء ساطعة */
+  --border-gray: #4a5568 !important;   /* حدود خفيفة */
+}
   
-  /* انتقال سلس للألوان عند التبديل */
-  body {
-    margin: 0;
-    background-color: var(--bg-lightGray);
-    color: var(--text-darkGray);
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
+/* انتقال سلس للألوان عند التبديل */
+body {
+  margin: 0;
+  background-color: var(--bg-lightGray);
+  color: var(--text-darkGray);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
