@@ -26,6 +26,7 @@ const BookCard = ({ book, selectedStage }) => {
   const hasSanaa = safeName.includes('صنعاء');
   const hasAden = safeName.includes('عدن');
 
+  // دالة فتح الكتاب (سنستخدمها للزر وللغلاف معاً)
   const handleReadClick = () => {
     if (book?.id) navigate(`/read/${book.id}`, { state: { bookName: safeName } });
   };
@@ -78,12 +79,16 @@ const BookCard = ({ book, selectedStage }) => {
         {isFavorite ? '⭐' : '☆'}
       </button>
 
-      <div style={{
+      {/* 🚀 هنا تم التعديل: أصبح الغلاف بالكامل زراً قابلاً للضغط يفتح الكتاب مباشرة */}
+      <div 
+        onClick={handleReadClick}
+        style={{
         backgroundColor: '#15803d', 
         textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center',
         height: '260px', 
         color: '#ffffff', position: 'relative', 
-        padding: '8px' 
+        padding: '8px',
+        cursor: 'pointer' /* يظهر للمستخدم كزر */
       }}>
         <img
           src={coverPath}

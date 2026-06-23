@@ -2,35 +2,22 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>مَنهَجي</title>
     
-    <!-- ============ أضف هذا الجزء في الـ head ============ -->
-    <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
-
-    <!-- Theme Color -->
     <meta name="theme-color" content="#1B5E20">
-
-    <!-- Apple Mobile Web App -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="مَنهَجي">
-
-    <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231B5E20' width='192' height='192' rx='45'/><text x='96' y='120' font-size='100' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>📚</text></svg>">
-
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231B5E20' width='192' height='192'/><text x='96' y='120' font-size='100' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>📚</text></svg>">
-    <!-- ============ انتهى الجزء المضاف ============ -->
-</head>
+    </head>
 <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     
-    <!-- ============ أضف هذا الجزء قبل إغلاق body ============ -->
     <script>
-      // تسجيل Service Worker
       if ('serviceWorker' in navigator ) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/service-worker.js')
@@ -43,6 +30,5 @@
         });
       }
     </script>
-    <!-- ============ انتهى الجزء المضاف ============ -->
-</body>
+    </body>
 </html>
