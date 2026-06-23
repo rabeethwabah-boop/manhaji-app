@@ -1,13 +1,21 @@
 // src/components/BookCard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBookCoverPath, cleanBookName } from '../utils/helpers';
 
 const BookCard = ({ book, selectedStage }) => {
   const [imageStatus, setImageStatus] = useState('loading');
+  const [isSavedOffline, setIsSavedOffline] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   
-  // 🛡️ حماية المفضلة من الأعطال (try-catch)
+  const downloadUrl = `https://drive.google.com/uc?export=download&id=${book?.id || ''}`;
+  const safeName = book?.name || '';
+  const cleanName = cleanBookName(safeName);
+  const hasSanaa = safeName.includes('صنعاء');
+  const hasAden = safeName.includes('عدن');
+
+  // 🛡️ حماية المفضلة
   const [isFavorite, setIsFavorite] = useState(() => {
     try {
       const favs = JSON.parse(localStorage.getItem('manhaji_favorites') || '[]');
@@ -16,19 +24,49 @@ const BookCard = ({ book, selectedStage }) => {
       return false;
     }
   });
-  
-  const coverPath = getBookCoverPath(book);
-  const downloadUrl = `https://drive.google.com/uc?export=download&id=${book?.id || ''}`;
-  
-  // 🛡️ حماية الاسم والشارات
-  const safeName = book?.name || '';
-  const cleanName = cleanBookName(safeName);
-  const hasSanaa = safeName.includes('صنعاء');
-  const hasAden = safeName.includes('عدن');
 
-  // دالة فتح الكتاب (سنستخدمها للزر وللغلاف معاً)
+  // 📡 فحص ذكي: هل هذا الكتاب محفوظ مسبقاً في الجوال؟
+  useEffect(() => {
+    if (book?.id) {
+      caches.match(downloadUrl).then((response) => {
+        if (response) setIsSavedOffline(true);
+      });
+    }
+  }, [downloadUrl, book?.id]);
+
+  // دالة فتح الكتاب
   const handleReadClick = () => {
     if (book?.id) navigate(`/read/${book.id}`, { state: { bookName: safeName } });
+  };
+
+  // 📥 دالة الحفظ السحري للعمل بدون إنترنت
+  const handleSaveOffline = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // إذا كان محفوظاً، لا داعي لإعادة تحميله
+    if (isSavedOffline) {
+      alert('✅ هذا الكتاب موجود في جهازك ويمكنك قراءته بدون إنترنت!');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const cache = await caches.open('manhaji-v1');
+      // سحب الكتاب من النت وحفظه في ذاكرة التطبيق (بوضع no-cors لتجاوز حماية جوجل)
+      const request = new Request(downloadUrl, { mode: 'no-cors' });
+      const response = await fetch(request);
+      await cache.put(request, response);
+      
+      setIsSavedOffline(true);
+      alert('🎉 تم حفظ الكتاب بنجاح! يمكنك الآن قراءته في أي وقت بدون إنترنت.');
+    } catch (error) {
+      console.error("خطأ في الحفظ", error);
+      // كخطة بديلة إذا تعثر الحفظ المخفي، نقوم بتنزيله كملف عادي في مجلد التنزيلات
+      window.open(downloadUrl, '_blank');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const toggleFavorite = (e) => {
@@ -72,14 +110,11 @@ const BookCard = ({ book, selectedStage }) => {
           display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
           transition: 'transform 0.2s', color: '#000' 
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         title="إضافة للمفضلة"
       >
         {isFavorite ? '⭐' : '☆'}
       </button>
 
-      {/* 🚀 هنا تم التعديل: أصبح الغلاف بالكامل زراً قابلاً للضغط يفتح الكتاب مباشرة */}
       <div 
         onClick={handleReadClick}
         style={{
@@ -88,10 +123,10 @@ const BookCard = ({ book, selectedStage }) => {
         height: '260px', 
         color: '#ffffff', position: 'relative', 
         padding: '8px',
-        cursor: 'pointer' /* يظهر للمستخدم كزر */
+        cursor: 'pointer'
       }}>
         <img
-          src={coverPath}
+          src={getBookCoverPath(book)}
           alt={cleanName}
           style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px', display: imageStatus === 'failed' ? 'none' : 'block' }}
           onLoad={() => setImageStatus('loaded')}
@@ -114,8 +149,30 @@ const BookCard = ({ book, selectedStage }) => {
       <div style={{ padding: '15px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <p style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-darkGray)', margin: '0 0 15px 0', lineHeight: '1.4', textAlign: 'center', transition: 'color 0.3s' }}>{cleanName}</p>
         <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
-          <button onClick={handleReadClick} style={{ padding: '10px', backgroundColor: '#166534', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', transition: 'background-color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14532d'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#166534'}>👁️ قراءة</button>
-          <a href={downloadUrl} download style={{ padding: '10px', backgroundColor: '#f97316', color: '#ffffff', textDecoration: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', textAlign: 'center', transition: 'background-color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ea580c'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f97316'}>📥 تحميل</a>
+          
+          <button onClick={handleReadClick} style={{ padding: '10px', backgroundColor: '#166534', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', transition: 'background-color 0.2s' }}>
+            👁️ قراءة
+          </button>
+
+          {/* 🚀 زر التحميل الذكي الجديد */}
+          <button 
+            onClick={handleSaveOffline} 
+            disabled={isSaving}
+            style={{ 
+              padding: '10px', 
+              backgroundColor: isSavedOffline ? '#4b5563' : (isSaving ? '#fb923c' : '#f97316'), 
+              color: '#ffffff', 
+              border: 'none', 
+              borderRadius: '8px', 
+              fontSize: '13px', 
+              fontWeight: 'bold', 
+              cursor: isSavedOffline ? 'default' : (isSaving ? 'wait' : 'pointer'), 
+              transition: 'background-color 0.2s' 
+            }}
+          >
+            {isSaving ? '⏳ جاري الحفظ...' : (isSavedOffline ? '✅ متاح بدون نت' : '📥 حفظ للمحمول')}
+          </button>
+
         </div>
       </div>
     </div>
