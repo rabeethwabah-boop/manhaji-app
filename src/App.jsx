@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './index.css';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
-import { SplashScreen } from '@capacitor/splash-screen'; // استيراد مكتبة شاشة البداية
+import { SplashScreen } from '@capacitor/splash-screen'; 
 import Header from './components/Header';
 
 // استدعاء الصفحات
@@ -18,22 +18,23 @@ const App = () => {
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
 
-  // أدوات لمعرفة مكان المستخدم الحالي ونقله
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    // إخفاء شاشة البداية تلقائياً بمجرد وضوح واجهة التطبيق للمستخدم
+    // إخفاء شاشة البداية بعد تأخير مقصود (ثانيتين) لكي يرى المستخدم الشعار
     const hideSplash = async () => {
       try {
-        await SplashScreen.hide();
+        setTimeout(async () => {
+          await SplashScreen.hide();
+        }, 2000); // 2000 ملي ثانية تعني ثانيتين
       } catch (e) {
         console.warn('Splash screen plugin not running or not on mobile', e);
       }
     };
     hideSplash();
 
-    // التحكم بزر الرجوع في نظام الأندرويد
+    // التحكم بزر الرجوع في الأندرويد
     const handleBackButton = async () => {
       CapacitorApp.addListener('backButton', ({ canGoBack }) => {
         if (location.pathname === '/') {
