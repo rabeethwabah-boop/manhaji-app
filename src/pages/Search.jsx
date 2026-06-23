@@ -1,64 +1,90 @@
 // src/pages/Search.jsx
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { colors } from '../theme';
+import React, { useState } from 'react';
 import booksData from '../booksData_Complete.json';
 import BookCard from '../components/BookCard';
+import { cleanBookName } from '../utils/helpers';
 
 const Search = () => {
-  const [searchParams] = useSearchParams();
-  const query = searchParams.get('q') || ''; // التقاط كلمة البحث من الرابط
-  const navigate = useNavigate();
-  const [results, setResults] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    if (!query) {
-      setResults([]);
-      return;
-    }
+  const getFilteredBooks = () => {
+    if (!searchQuery.trim()) return [];
+    
+    const results = [];
+    const query = searchQuery.toLowerCase();
 
-    const allBooks = [];
-    const lowerQuery = query.toLowerCase();
-
-    // خوارزمية ذكية لاستخراج جميع الكتب من كل المراحل والصفوف والبحث داخلها
-    Object.entries(booksData).forEach(([stage, grades]) => {
-      Object.entries(grades).forEach(([grade, books]) => {
-        books.forEach((book) => {
-          if (book.name.toLowerCase().includes(lowerQuery)) {
-            // ندمج بيانات الكتاب ونضيف إليها اسم المرحلة والصف ليعرف الطالب مصدره
-            allBooks.push({ ...book, stage, grade });
+    try {
+      Object.keys(booksData).forEach((stage) => {
+        Object.keys(booksData[stage]).forEach((grade) => {
+          const books = booksData[stage][grade];
+          if (Array.isArray(books)) {
+            books.forEach((book) => {
+              if (book?.name && book.name.toLowerCase().includes(query)) {
+                if (!results.some(r => r.id === book.id)) {
+                  results.push({ ...book, stage, grade });
+                }
+              }
+            });
           }
         });
       });
-    });
+    } catch (e) {
+      console.error("خطأ أثناء البحث:", e);
+    }
+    return results;
+  };
 
-    setResults(allBooks);
-  }, [query]);
+  const filteredBooks = getFilteredBooks();
 
   return (
-    <div>
-      <h2 style={{ marginBottom: '20px', color: colors.darkGray }}>
-        نتائج البحث عن: <span style={{ color: colors.orange }}>"{query}"</span>
-      </h2>
+    <div style={{ paddingBottom: '40px' }}>
+      <h2 style={{ color: 'var(--text-darkGray)', marginBottom: '15px' }}>🔍 البحث عن الكُتب</h2>
       
-      {results.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '50px 0' }}>
-          <span style={{ fontSize: '64px' }}>🔍</span>
-          <p style={{ color: '#a0aec0', fontSize: '20px', marginTop: '15px' }}>
-            لم يتم العثور على كتب تطابق بحثك. جرب كتابة اسم المادة (مثال: علوم).
-          </p>
+      {/* سطر البحث الاحترافي المضمون الظهور */}
+      <div style={{ marginBottom: '25px', width: '100%' }}>
+        <input
+          type="text"
+          placeholder="اكتب اسم الكتاب هنا (مثلاً: الرياضيات، التاريخ...)"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '14px 20px',
+            fontSize: '16px',
+            borderRadius: '12px',
+            border: '2px solid #15803d',
+            backgroundColor: '#ffffff',
+            color: '#2d3748',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+            outline: 'none',
+            fontFamily: 'Cairo, sans-serif',
+            boxSizing: 'border-box'
+          }}
+        />
+      </div>
+
+      {searchQuery.trim() === '' ? (
+        <div style={{ textAlign: 'center', color: '#a0aec0', marginTop: '40px' }}>
+          <span style={{ fontSize: '48px' }}>📚</span>
+          <p style={{ marginTop: '10px' }}>ابدأ بكتابة اسم المادة المدرسية للبحث عنها في جميع الصفوف.</p>
+        </div>
+      ) : filteredBooks.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#a0aec0', marginTop: '40px' }}>
+          <span style={{ fontSize: '48px' }}>❌</span>
+          <p style={{ marginTop: '10px' }}>لم يتم العثور على كتب تطابق بحثك: "{searchQuery}"</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
-          {results.map((book, index) => (
-            <BookCard key={index} book={book} selectedStage={book.stage} />
-          ))}
+        <div>
+          <p style={{ color: '#718096', marginBottom: '15px', fontSize: '14px' }}>
+            تم العثور على ({filteredBooks.length}) كتاب مطابِق:
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(145px, 1fr))', gap: '15px' }}>
+            {filteredBooks.map((book, index) => (
+              <BookCard key={book.id || index} book={book} selectedStage={book.stage} />
+            ))}
+          </div>
         </div>
       )}
-
-      <button onClick={() => navigate(-1)} style={{ marginTop: '30px', padding: '10px 20px', backgroundColor: colors.darkGray, color: colors.white, border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-        🔙 عودة
-      </button>
     </div>
   );
 };

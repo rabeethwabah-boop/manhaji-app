@@ -8,7 +8,6 @@ const Downloads = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // جلب قائمة الكتب المحملة من الذاكرة المحلية
     const saved = JSON.parse(localStorage.getItem('manhaji_downloads') || '[]');
     setDownloadedBooks(saved);
   }, []);
@@ -17,7 +16,6 @@ const Downloads = () => {
     const confirmDelete = window.confirm("هل أنت متأكد أنك تريد حذف هذا الكتاب من جهازك لتوفير المساحة؟");
     if (!confirmDelete) return;
 
-    // 1. حذف الكتاب (PDF) من الذاكرة المخفية (Cache)
     const downloadUrl = `https://drive.google.com/uc?export=download&id=${bookId}`;
     try {
       const cache = await caches.open('manhaji-v1');
@@ -26,10 +24,16 @@ const Downloads = () => {
       console.error("خطأ في حذف الكاش", e);
     }
 
-    // 2. حذفه من القائمة المعروضة
     const updatedBooks = downloadedBooks.filter(b => b.id !== bookId);
     localStorage.setItem('manhaji_downloads', JSON.stringify(updatedBooks));
     setDownloadedBooks(updatedBooks);
+  };
+
+  // دالة فتح ملف الأوفلاين عبر الاستدعاء المباشر للنظام لتجنب انهيار الـ Iframe والتحكم الكامل بالتكبير
+  const openOfflineBook = (bookId) => {
+    const downloadUrl = `https://drive.google.com/uc?export=download&id=${bookId}`;
+    // توجيه النظام لفتح الرابط المباشر للملف، مما يجعل الجوال يفتح قارئه الأصلي الحصين من غوغل أو أدوبي
+    window.open(downloadUrl, '_blank');
   };
 
   return (
@@ -56,20 +60,22 @@ const Downloads = () => {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           {downloadedBooks.map(book => (
-            <div key={book.id} style={{ display: 'flex', backgroundColor: 'var(--bg-white)', padding: '12px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', alignItems: 'center', gap: '15px', transition: 'transform 0.2s' }}>
+            <div key={book.id} style={{ display: 'flex', backgroundColor: 'var(--bg-white)', padding: '12px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', alignItems: 'center', gap: '15px' }}>
               <img src={getBookCoverPath(book)} alt={cleanBookName(book.name)} style={{ width: '65px', height: '90px', objectFit: 'cover', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
               
               <div style={{ flex: 1 }}>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: 'var(--text-darkGray)', lineHeight: '1.4' }}>{cleanBookName(book.name)}</h4>
-                <button onClick={() => navigate(`/read/${book.id}`, { state: { bookName: book.name } })} style={{ padding: '6px 15px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span>👁️</span> قراءة الأوفلاين
+                <button 
+                  onClick={() => openOfflineBook(book.id)} 
+                  style={{ padding: '8px 15px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <span>📖</span> قراءة الأوفلاين (مُكبّر أصلي)
                 </button>
               </div>
 
               <button 
                 onClick={() => handleDelete(book.id)} 
-                style={{ width: '40px', height: '40px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', transition: 'background-color 0.2s' }} 
-                title="حذف لتوفير المساحة"
+                style={{ width: '40px', height: '40px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }} 
               >
                 🗑️
               </button>
