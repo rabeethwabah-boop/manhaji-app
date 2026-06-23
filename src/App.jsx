@@ -5,6 +5,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { SplashScreen } from '@capacitor/splash-screen'; 
 import Header from './components/Header';
+import BottomNav from './components/BottomNav'; // استيراد الشريط السفلي الجديد
 
 // استدعاء الصفحات
 import Home from './pages/Home';
@@ -13,6 +14,7 @@ import Books from './pages/Books';
 import Search from './pages/Search'; 
 import PdfViewer from './pages/PdfViewer';
 import Favorites from './pages/Favorites';
+import Downloads from './pages/Downloads'; // استيراد صفحة التنزيلات الجديدة
 
 const App = () => {
   const [showAbout, setShowAbout] = useState(false);
@@ -22,12 +24,12 @@ const App = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // إخفاء شاشة البداية بعد تأخير مقصود (ثانيتين) لكي يرى المستخدم الشعار
+    // إخفاء شاشة البداية بعد تأخير مقصود (ثانيتين)
     const hideSplash = async () => {
       try {
         setTimeout(async () => {
           await SplashScreen.hide();
-        }, 2000); // 2000 ملي ثانية تعني ثانيتين
+        }, 2000);
       } catch (e) {
         console.warn('Splash screen plugin not running or not on mobile', e);
       }
@@ -62,7 +64,7 @@ const App = () => {
       fontFamily: 'Cairo, sans-serif', direction: 'rtl', minHeight: '100vh', 
       backgroundColor: 'var(--bg-lightGray)', 
       color: 'var(--text-darkGray)',
-      padding: '20px',
+      padding: '20px 20px 80px 20px', // زيادة البادينج السفلي لكي لا يغطي الشريط السفلي محتوى الصفحات
       transition: 'background-color 0.3s, color 0.3s'
     }}>
       
@@ -75,7 +77,11 @@ const App = () => {
         <Route path="/search" element={<Search />} /> 
         <Route path="/read/:bookId" element={<PdfViewer />} />
         <Route path="/favorites" element={<Favorites />} />
+        <Route path="/downloads" element={<Downloads />} /> {/* مسار التنزيلات */}
       </Routes>
+
+      {/* شريط التنقل السفلي للموبايل */}
+      <BottomNav />
 
       {/* النوافذ المنبثقة: حول التطبيق */}
       {showAbout && (
