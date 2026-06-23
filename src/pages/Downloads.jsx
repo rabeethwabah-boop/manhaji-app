@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBookCoverPath, cleanBookName } from '../utils/helpers';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { FileOpener } from '@capacitor-community/file-opener';
 
 const Downloads = () => {
   const [downloadedBooks, setDownloadedBooks] = useState([]);
@@ -12,35 +14,54 @@ const Downloads = () => {
     setDownloadedBooks(saved);
   }, []);
 
-  const handleDelete = async (bookId) => {
-    const confirmDelete = window.confirm("هل أنت متأكد أنك تريد حذف هذا الكتاب من جهازك لتوفير المساحة؟");
+  const handleDelete = async (bookId, fileName) => {
+    const confirmDelete = window.confirm("هل أنت متأكد أنك تريد حذف هذا الكتاب نهائياً من ذاكرة الهاتف؟");
     if (!confirmDelete) return;
 
-    const downloadUrl = `https://drive.google.com/uc?export=download&id=${bookId}`;
+    // 1. حذف الملف الأصلي من ذاكرة الجوال العميقة
     try {
-      const cache = await caches.open('manhaji-v1');
-      await cache.delete(downloadUrl);
+      const targetFile = fileName || `manhaji_${bookId}.pdf`;
+      await Filesystem.deleteFile({
+        path: targetFile,
+        directory: Directory.Data
+      });
     } catch (e) {
-      console.error("خطأ في حذف الكاش", e);
+      console.warn("ربما تم حذف الملف مسبقاً من الذاكرة", e);
     }
 
+    // 2. تحديث قائمة العرض
     const updatedBooks = downloadedBooks.filter(b => b.id !== bookId);
     localStorage.setItem('manhaji_downloads', JSON.stringify(updatedBooks));
     setDownloadedBooks(updatedBooks);
   };
 
-  // دالة فتح ملف الأوفلاين عبر الاستدعاء المباشر للنظام لتجنب انهيار الـ Iframe والتحكم الكامل بالتكبير
-  const openOfflineBook = (bookId) => {
-    const downloadUrl = `https://drive.google.com/uc?export=download&id=${bookId}`;
-    // توجيه النظام لفتح الرابط المباشر للملف، مما يجعل الجوال يفتح قارئه الأصلي الحصين من غوغل أو أدوبي
-    window.open(downloadUrl, '_blank');
+  const openOfflineBook = async (book) => {
+    try {
+      const targetFile = book.fileName || `manhaji_${book.id}.pdf`;
+      
+      // الحصول على الرابط الفعلي للملف داخل الجهاز
+      const fileInfo = await Filesystem.getUri({
+        path: targetFile,
+        directory: Directory.Data
+      });
+
+      // توجيه الأندرويد لفتح الملف بأي تطبيق PDF متوفر فيه
+      await FileOpener.open({
+        filePath: fileInfo.uri,
+        contentType: 'application/pdf',
+      });
+
+    } catch (error) {
+      console.error("خطأ في فتح الملف", error);
+      alert('عذراً، لم نتمكن من فتح الكتاب. تأكد من وجود تطبيق مثل (قارئ PDF) في جوالك، أو قد يكون الملف معطوباً وحاول تحميله مجدداً.');
+    }
   };
 
   return (
     <div style={{ paddingBottom: '80px', position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}>
         <span style={{ fontSize: '28px' }}>📥</span>
-        <h2 style={{ color: 'var(--text-darkGray)', margin: 0 }}>مكتبتي (بدون إنترنت)</h2>
+        <h2 style={{ color: 'var(--text-darkGray)', margin: 0 }}>مكتبتي المحملة</h2>
       </div>
       
       {downloadedBooks.length === 0 ? (
@@ -48,14 +69,8 @@ const Downloads = () => {
           <span style={{ fontSize: '64px', display: 'block', marginBottom: '15px' }}>📭</span>
           <h3 style={{ color: 'var(--text-darkGray)', marginBottom: '10px' }}>المكتبة فارغة</h3>
           <p style={{ color: '#718096', lineHeight: '1.6', maxWidth: '300px', margin: '0 auto' }}>
-            لم تقم بحفظ أي كتب بعد. تصفح المناهج واضغط على "حفظ للمحمول" لتجد كتبك هنا وتقرأها بدون إنترنت!
+            لم تقم بتنزيل أي كتب بعد. تصفح المناهج واضغط على "تنزيل للموبايل" لحفظها وقراءتها بدون إنترنت!
           </p>
-          <button 
-            onClick={() => navigate('/')}
-            style={{ marginTop: '20px', padding: '10px 25px', backgroundColor: '#15803d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            تصفح المناهج
-          </button>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -66,16 +81,17 @@ const Downloads = () => {
               <div style={{ flex: 1 }}>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: 'var(--text-darkGray)', lineHeight: '1.4' }}>{cleanBookName(book.name)}</h4>
                 <button 
-                  onClick={() => openOfflineBook(book.id)} 
+                  onClick={() => openOfflineBook(book)} 
                   style={{ padding: '8px 15px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
                 >
-                  <span>📖</span> قراءة الأوفلاين (مُكبّر أصلي)
+                  <span>📖</span> فتح الكتاب (بدون نت)
                 </button>
               </div>
 
               <button 
-                onClick={() => handleDelete(book.id)} 
+                onClick={() => handleDelete(book.id, book.fileName)} 
                 style={{ width: '40px', height: '40px', backgroundColor: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }} 
+                title="حذف لتوفير المساحة"
               >
                 🗑️
               </button>

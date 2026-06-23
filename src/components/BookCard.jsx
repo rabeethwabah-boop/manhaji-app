@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBookCoverPath, cleanBookName } from '../utils/helpers';
+import { CapacitorHttp } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 const BookCard = ({ book, selectedStage }) => {
   const [imageStatus, setImageStatus] = useState('loading');
@@ -24,11 +26,12 @@ const BookCard = ({ book, selectedStage }) => {
 
   useEffect(() => {
     if (book?.id) {
-      caches.match(downloadUrl).then((response) => {
-        if (response) setIsSavedOffline(true);
-      });
+      const savedBooks = JSON.parse(localStorage.getItem('manhaji_downloads') || '[]');
+      if (savedBooks.some(b => b.id === book.id)) {
+        setIsSavedOffline(true);
+      }
     }
-  }, [downloadUrl, book?.id]);
+  }, [book?.id]);
 
   const handleReadClick = () => {
     if (book?.id) navigate(`/read/${book.id}`, { state: { bookName: safeName } });
@@ -39,29 +42,35 @@ const BookCard = ({ book, selectedStage }) => {
     e.stopPropagation();
 
     if (isSavedOffline) {
-      alert('✅ هذا الكتاب موجود في جهازك ويمكنك قراءته بدون إنترنت!');
+      alert('✅ هذا الكتاب متاح في جهازك بالفعل!');
       return;
     }
 
     setIsSaving(true);
     try {
-      const cache = await caches.open('manhaji-v1');
-      const request = new Request(downloadUrl, { mode: 'no-cors' });
-      const response = await fetch(request);
-      await cache.put(request, response);
+      const fileName = `manhaji_${book.id}.pdf`;
+
+      // 🚀 التحميل المباشر والعميق لذاكرة الجوال (تجاوز الويب تماماً)
+      await CapacitorHttp.downloadFile({
+        url: downloadUrl,
+        filePath: fileName,
+        fileDirectory: Directory.Data, // مسار بيانات التطبيق في الأندرويد
+        connectTimeout: 60000,
+        readTimeout: 60000,
+      });
       
-      // 🚀 التعديل الجديد: تسجيل بيانات الكتاب في الذاكرة لكي يظهر في صفحة التنزيلات
+      // تسجيل بيانات الكتاب واسم الملف للوصول إليه لاحقاً
       const savedBooks = JSON.parse(localStorage.getItem('manhaji_downloads') || '[]');
       if (!savedBooks.some(b => b.id === book.id)) {
-        savedBooks.push(book);
+        savedBooks.push({ ...book, fileName: fileName });
         localStorage.setItem('manhaji_downloads', JSON.stringify(savedBooks));
       }
 
       setIsSavedOffline(true);
-      alert('🎉 تم حفظ الكتاب بنجاح! يمكنك الآن قراءته في أي وقت بدون إنترنت.');
+      alert('🎉 تم تنزيل الكتاب بنجاح! يمكنك الآن قراءته في أي وقت بدون إنترنت.');
     } catch (error) {
-      console.error("خطأ في الحفظ", error);
-      window.open(downloadUrl, '_blank');
+      console.error("خطأ في التحميل", error);
+      alert('حدث خطأ أثناء تنزيل الكتاب. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsSaving(false);
     }
@@ -89,11 +98,8 @@ const BookCard = ({ book, selectedStage }) => {
       backgroundColor: 'var(--bg-white)', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
       overflow: 'hidden', transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.3s', 
       display: 'flex', flexDirection: 'column', position: 'relative'
-    }}
-    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)'; }}
-    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1)'; }}>
-      
-      <button onClick={toggleFavorite} style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10, background: 'rgba(255, 255, 255, 0.9)', border: 'none', borderRadius: '50%', width: '35px', height: '35px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', transition: 'transform 0.2s', color: '#000' }} title="إضافة للمفضلة">
+    }}>
+      <button onClick={toggleFavorite} style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10, background: 'rgba(255, 255, 255, 0.9)', border: 'none', borderRadius: '50%', width: '35px', height: '35px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} title="إضافة للمفضلة">
         {isFavorite ? '⭐' : '☆'}
       </button>
 
@@ -103,20 +109,14 @@ const BookCard = ({ book, selectedStage }) => {
           {hasSanaa && <span style={{ backgroundColor: '#0284c7', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>صنعاء</span>}
           {hasAden && <span style={{ backgroundColor: '#ea580c', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>عدن</span>}
         </div>
-        {imageStatus === 'failed' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
-            <span style={{ fontSize: '32px', marginBottom: '10px' }}>📚</span>
-            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', lineHeight: '1.4', textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>{cleanName}</h4>
-          </div>
-        )}
       </div>
       
       <div style={{ padding: '15px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <p style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-darkGray)', margin: '0 0 15px 0', lineHeight: '1.4', textAlign: 'center', transition: 'color 0.3s' }}>{cleanName}</p>
+        <p style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-darkGray)', margin: '0 0 15px 0', lineHeight: '1.4', textAlign: 'center' }}>{cleanName}</p>
         <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
-          <button onClick={handleReadClick} style={{ padding: '10px', backgroundColor: '#166534', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', transition: 'background-color 0.2s' }}>👁️ قراءة</button>
-          <button onClick={handleSaveOffline} disabled={isSaving} style={{ padding: '10px', backgroundColor: isSavedOffline ? '#4b5563' : (isSaving ? '#fb923c' : '#f97316'), color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: isSavedOffline ? 'default' : (isSaving ? 'wait' : 'pointer'), transition: 'background-color 0.2s' }}>
-            {isSaving ? '⏳ جاري الحفظ...' : (isSavedOffline ? '✅ متاح بدون نت' : '📥 حفظ للمحمول')}
+          <button onClick={handleReadClick} style={{ padding: '10px', backgroundColor: '#166534', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>👁️ قراءة أونلاين</button>
+          <button onClick={handleSaveOffline} disabled={isSaving || isSavedOffline} style={{ padding: '10px', backgroundColor: isSavedOffline ? '#4b5563' : (isSaving ? '#fb923c' : '#f97316'), color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: isSavedOffline ? 'default' : (isSaving ? 'wait' : 'pointer') }}>
+            {isSaving ? '⏳ جاري التنزيل الحقيقي...' : (isSavedOffline ? '✅ محفوظ في الذاكرة' : '📥 تنزيل للموبايل')}
           </button>
         </div>
       </div>

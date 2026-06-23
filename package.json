@@ -10,9 +10,11 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@capacitor-community/file-opener": "^8.0.1",
         "@capacitor/android": "^8.4.1",
         "@capacitor/app": "^8.1.0",
         "@capacitor/core": "^8.4.1",
+        "@capacitor/filesystem": "^8.1.2",
         "@capacitor/splash-screen": "^8.0.1",
         "react": "^19.2.6",
         "react-dom": "^19.2.6",
