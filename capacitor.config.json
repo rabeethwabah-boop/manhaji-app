@@ -1,5 +1,14 @@
 {
   "appId": "com.manhaji.app",
-  "appName": "Manhaji",
-  "webDir": "dist"
+  "appName": "مَنهَجي",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "androidScaleType": "CENTER_INSIDE"
+    }
+  }
 }

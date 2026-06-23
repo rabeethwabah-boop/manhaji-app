@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { App as CapacitorApp } from '@capacitor/app'; // مكتبة التحكم بأزرار الهاتف
+import { App as CapacitorApp } from '@capacitor/app';
+import { SplashScreen } from '@capacitor/splash-screen'; // استيراد مكتبة شاشة البداية
 import Header from './components/Header';
 
 // استدعاء الصفحات
@@ -21,24 +22,28 @@ const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ----------------------------------------------------
-  // الكود السحري للتحكم بزر الرجوع في نظام الأندرويد
-  // ----------------------------------------------------
   useEffect(() => {
+    // إخفاء شاشة البداية تلقائياً بمجرد وضوح واجهة التطبيق للمستخدم
+    const hideSplash = async () => {
+      try {
+        await SplashScreen.hide();
+      } catch (e) {
+        console.warn('Splash screen plugin not running or not on mobile', e);
+      }
+    };
+    hideSplash();
+
+    // التحكم بزر الرجوع في نظام الأندرويد
     const handleBackButton = async () => {
       CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-        // إذا كنا في الصفحة الرئيسية
         if (location.pathname === '/') {
-          // إذا كانت أي نافذة منبثقة مفتوحة، أغلقها فقط ولا تخرج من التطبيق
           if (showAbout || showContact) {
             setShowAbout(false);
             setShowContact(false);
           } else {
-            // إذا لم يكن هناك شيء مفتوح ونحن في الرئيسية، اخرج من التطبيق
             CapacitorApp.exitApp();
           }
         } else {
-          // إذا كنا في أي صفحة أخرى (كتاب، صفوف، بحث)، ارجع خطوة واحدة للخلف
           navigate(-1);
         }
       });
@@ -46,12 +51,10 @@ const App = () => {
 
     handleBackButton();
 
-    // تنظيف الحدث لعدم تكرار الأوامر
     return () => {
       CapacitorApp.removeAllListeners();
     };
   }, [location.pathname, navigate, showAbout, showContact]);
-  // ----------------------------------------------------
 
   return (
     <div style={{ 
@@ -73,7 +76,7 @@ const App = () => {
         <Route path="/favorites" element={<Favorites />} />
       </Routes>
 
-      {/* النوافذ المنبثقة */}
+      {/* النوافذ المنبثقة: حول التطبيق */}
       {showAbout && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(3px)' }}>
           <div style={{ backgroundColor: 'var(--bg-white)', color: 'var(--text-darkGray)', padding: '30px', borderRadius: '16px', maxWidth: '500px', width: '90%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
@@ -86,6 +89,7 @@ const App = () => {
         </div>
       )}
 
+      {/* النوافذ المنبثقة: تواصل معنا */}
       {showContact && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(3px)' }}>
           <div style={{ backgroundColor: 'var(--bg-white)', color: 'var(--text-darkGray)', padding: '30px', borderRadius: '16px', maxWidth: '500px', width: '90%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
@@ -101,4 +105,4 @@ const App = () => {
   );
 };
 
-export default App; 
+export default App;
