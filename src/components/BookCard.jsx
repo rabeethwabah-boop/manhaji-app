@@ -38,10 +38,10 @@ const BookCard = ({ book, selectedStage }) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // 1. فتح الرابط عبر متصفح الهاتف لضمان نجاح التحميل 100%
-    window.open(downloadUrl, '_system');
+    // الطريقة الأصلية المريحة: تفتح نافذة اختيار حساب جوجل درايف مباشرة داخل التطبيق
+    window.open(downloadUrl, '_blank');
     
-    // 2. تسجيل الكتاب فوراً في قسم التنزيلات داخل التطبيق
+    // تسجيل الكتاب فوراً في قسم التنزيلات في التطبيق
     const savedBooks = JSON.parse(localStorage.getItem('manhaji_downloads') || '[]');
     if (!savedBooks.some(b => b.id === book.id)) {
       savedBooks.push(book);
@@ -89,8 +89,7 @@ const BookCard = ({ book, selectedStage }) => {
         <p style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-darkGray)', margin: '0 0 15px 0', lineHeight: '1.4', textAlign: 'center' }}>{cleanName}</p>
         <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
           <button onClick={handleReadClick} style={{ padding: '10px', backgroundColor: '#166534', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>👁️ قراءة أونلاين</button>
-          
-          {/* تم إرجاع الزر ليكون (تحميل) كما طلبت تماماً */}
+         
           <button onClick={handleDownload} style={{ padding: '10px', backgroundColor: isSavedOffline ? '#4b5563' : '#f97316', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
             {isSavedOffline ? '✅ متوفر في التنزيلات' : '📥 تحميل'}
           </button>

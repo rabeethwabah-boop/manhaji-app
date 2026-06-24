@@ -11,7 +11,7 @@ const Downloads = () => {
   }, []);
 
   const handleDelete = (bookId) => {
-    const confirmDelete = window.confirm("هل أنت متأكد أنك تريد إزالة الكتاب من تطبيق منهجي؟");
+    const confirmDelete = window.confirm("هل أنت متأكد أنك تريد إزالة الكتاب من السجل؟");
     if (!confirmDelete) return;
 
     const updatedBooks = downloadedBooks.filter(b => b.id !== bookId);
@@ -19,15 +19,16 @@ const Downloads = () => {
     setDownloadedBooks(updatedBooks);
   };
 
+  const openOfflineBook = (book) => {
+    // فتح الكتاب مباشرة من داخل التطبيق
+    window.open(`https://drive.google.com/file/d/${book.id}/view`, '_blank');
+  };
+
   return (
     <div style={{ paddingBottom: '80px', position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px' }}>
         <span style={{ fontSize: '28px' }}>📥</span>
         <h2 style={{ color: 'var(--text-darkGray)', margin: 0 }}>مكتبة التنزيلات</h2>
-      </div>
-
-      <div style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '15px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px', lineHeight: '1.6', border: '1px solid #bae6fd' }}>
-        💡 <strong>للقراءة بدون إنترنت:</strong> الكتب المحملة موجودة في تطبيق <strong>"ملفاتي"</strong> أو <strong>"التنزيلات"</strong> في جوالك. قم بفتحها من هناك لتستمتع بالتكبير السلس بالإصبعين.
       </div>
 
       {downloadedBooks.length === 0 ? (
@@ -46,7 +47,14 @@ const Downloads = () => {
               
               <div style={{ flex: 1 }}>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: 'var(--text-darkGray)', lineHeight: '1.4' }}>{cleanBookName(book.name)}</h4>
-                <p style={{ margin: 0, fontSize: '12px', color: '#16a34a', fontWeight: 'bold' }}>✅ متوفر في جهازك</p>
+                
+                {/* زر فتح الكتاب من داخل التنزيلات مباشرة */}
+                <button 
+                  onClick={() => openOfflineBook(book)} 
+                  style={{ padding: '8px 15px', marginTop: '5px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  📖 فتح الكتاب
+                </button>
               </div>
 
               <button 
