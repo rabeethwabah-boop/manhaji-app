@@ -2,13 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBookCoverPath, cleanBookName } from '../utils/helpers';
+import { CapacitorHttp } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 const BookCard = ({ book, selectedStage }) => {
   const [imageStatus, setImageStatus] = useState('loading');
   const [isSavedOffline, setIsSavedOffline] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   
-  const downloadUrl = `https://drive.google.com/uc?export=download&id=${book?.id || ''}`;
+  // الرابط مزود بكود تخطي حماية جوجل للملفات الكبيرة &confirm=t
+  const downloadUrl = `https://drive.google.com/uc?export=download&id=${book?.id || ''}&confirm=t`;
   const safeName = book?.name || '';
   const cleanName = cleanBookName(safeName);
   const hasSanaa = safeName.includes('صنعاء');
@@ -34,19 +38,38 @@ const BookCard = ({ book, selectedStage }) => {
     if (book?.id) navigate(`/read/${book.id}`, { state: { bookName: safeName } });
   };
 
-  const handleSaveOffline = (e) => {
+  const handleSaveOffline = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // الحل الأكيد: فتح رابط التنزيل عبر متصفح الجوال الأصلي لضمان تخطي حماية جوجل درايف
-    window.open(downloadUrl, '_system');
-    
-    // تسجيل الكتاب في ذاكرة التطبيق
-    const savedBooks = JSON.parse(localStorage.getItem('manhaji_downloads') || '[]');
-    if (!savedBooks.some(b => b.id === book.id)) {
-      savedBooks.push(book);
-      localStorage.setItem('manhaji_downloads', JSON.stringify(savedBooks));
+    if (isSavedOffline) return;
+
+    setIsSaving(true);
+    try {
+      const fileName = `manhaji_${book.id}.pdf`;
+
+      // التنزيل المباشر في ذاكرة بيانات التطبيق
+      await CapacitorHttp.downloadFile({
+        url: downloadUrl,
+        filePath: fileName,
+        fileDirectory: Directory.Data,
+        connectTimeout: 60000,
+        readTimeout: 60000,
+      });
+      
+      const savedBooks = JSON.parse(localStorage.getItem('manhaji_downloads') || '[]');
+      if (!savedBooks.some(b => b.id === book.id)) {
+        savedBooks.push({ ...book, fileName: fileName });
+        localStorage.setItem('manhaji_downloads', JSON.stringify(savedBooks));
+      }
+
       setIsSavedOffline(true);
+      alert('🎉 تم حفظ الكتاب بنجاح في قسم التنزيلات للتطبيق! يمكنك قراءته الآن أوفلاين في أي وقت.');
+    } catch (error) {
+      console.error("خطأ في التحميل", error);
+      alert('فشل تنزيل الملف، يرجى التحقق من اتصال الإنترنت والمحاولة مجدداً.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -89,8 +112,8 @@ const BookCard = ({ book, selectedStage }) => {
         <p style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-darkGray)', margin: '0 0 15px 0', lineHeight: '1.4', textAlign: 'center' }}>{cleanName}</p>
         <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
           <button onClick={handleReadClick} style={{ padding: '10px', backgroundColor: '#166534', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>👁️ قراءة أونلاين</button>
-          <button onClick={handleSaveOffline} style={{ padding: '10px', backgroundColor: isSavedOffline ? '#4b5563' : '#f97316', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
-            {isSavedOffline ? '✅ تم التنزيل مسبقاً' : '📥 تنزيل لجهازي'}
+          <button onClick={handleSaveOffline} disabled={isSaving || isSavedOffline} style={{ padding: '10px', backgroundColor: isSavedOffline ? '#4b5563' : (isSaving ? '#fb923c' : '#f97316'), color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: isSavedOffline ? 'default' : 'pointer' }}>
+            {isSaving ? '⏳ جاري الحفظ...' : (isSavedOffline ? '✅ في التنزيلات بالتطبيق' : '📥 حفظ للمحمول')}
           </button>
         </div>
       </div>

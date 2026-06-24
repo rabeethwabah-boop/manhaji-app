@@ -1,5 +1,5 @@
 // src/pages/PdfViewer.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { cleanBookName } from '../utils/helpers';
 
@@ -12,10 +12,23 @@ const PdfViewer = () => {
   const bookName = location.state?.bookName ? cleanBookName(location.state.bookName) : 'قراءة الكتاب';
   const iframeUrl = `https://drive.google.com/file/d/${bookId}/preview`;
 
+  // 🧠 التكبير الديناميكي: يفتح فقط في هذه الشاشة ويغلق عند الخروج
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+      meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+    }
+
+    return () => {
+      if (meta) {
+        meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+    };
+  }, []);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', margin: '-20px' }}>
       
-      {/* شريط علوي بسيط ونظيف */}
       <div style={{ 
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
         padding: '15px 20px', backgroundColor: '#15803d', color: '#ffffff',
@@ -32,7 +45,6 @@ const PdfViewer = () => {
         </h3>
       </div>
 
-      {/* منطقة عرض الـ PDF (نقية وبدون فلاتر لضمان عمل التكبير بإصبعين) */}
       <div style={{ flex: 1, position: 'relative', backgroundColor: '#4b5563' }}>
         {isLoading && (
           <div style={{ 
