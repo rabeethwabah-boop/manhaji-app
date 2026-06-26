@@ -15,11 +15,10 @@ const BookCard = ({ book, selectedStage }) => {
   const hasSanaa = safeName.includes('صنعاء');
   const hasAden = safeName.includes('عدن');
 
-  // المفتاح الدقيق الذي قمت بنسخه يدوياً
   const API_KEY = 'AIzaSyCLrdrg_l6AALWm6VZa8ZHIG1LqoviG7cI';
   
-  // الرابط السحري الذي يسحب الملفات بلغة الآلة
-  const apiDownloadUrl = `https://www.googleapis.com/drive/v3/files/${book?.id}?alt=media&key=${API_KEY}`;
+  // تم إضافة acknowledgeAbuse=true لتخطي فحص الفيروسات للملفات الكبيرة وضمان نزولها كـ PDF
+  const apiDownloadUrl = `https://www.googleapis.com/drive/v3/files/${book?.id}?alt=media&key=${API_KEY}&acknowledgeAbuse=true`;
 
   const [isFavorite, setIsFavorite] = useState(() => {
     try {
@@ -51,7 +50,6 @@ const BookCard = ({ book, selectedStage }) => {
     try {
       const fileName = `manhaji_${book.id}.pdf`;
       
-      // التحميل الصامت في الخلفية وتخزينه في مساحة التطبيق الآمنة
       await Filesystem.downloadFile({
         url: apiDownloadUrl,
         path: fileName,
@@ -110,7 +108,7 @@ const BookCard = ({ book, selectedStage }) => {
           <button onClick={handleReadClick} style={{ padding: '10px', backgroundColor: '#166534', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>👁️ قراءة أونلاين</button>
           
           <button onClick={handleDownload} disabled={isSavedOffline || isDownloading} style={{ padding: '10px', backgroundColor: isSavedOffline ? '#4b5563' : (isDownloading ? '#fb923c' : '#f97316'), color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: isSavedOffline ? 'default' : 'pointer' }}>
-            {isDownloading ? '⏳ جاري التحميل بصمت...' : (isSavedOffline ? '✅ متوفر في التنزيلات' : '📥 تحميل للكتاب')}
+            {isDownloading ? '⏳ جاري التحميل...' : (isSavedOffline ? '✅ متوفر في التنزيلات' : '📥 تحميل للكتاب')}
           </button>
         </div>
       </div>
