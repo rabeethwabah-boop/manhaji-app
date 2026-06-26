@@ -2,17 +2,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBookCoverPath, cleanBookName } from '../utils/helpers';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 
 const BookCard = ({ book, selectedStage }) => {
   const [imageStatus, setImageStatus] = useState('loading');
   const [isSavedOffline, setIsSavedOffline] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const navigate = useNavigate();
   
-  const downloadUrl = `https://drive.google.com/uc?export=download&id=${book?.id || ''}`;
   const safeName = book?.name || '';
   const cleanName = cleanBookName(safeName);
   const hasSanaa = safeName.includes('صنعاء');
   const hasAden = safeName.includes('عدن');
+
+  // المفتاح الدقيق الذي قمت بنسخه يدوياً
+  const API_KEY = 'AIzaSyCLrdrg_l6AALWm6VZa8ZHIG1LqoviG7cI';
+  
+  // الرابط السحري الذي يسحب الملفات بلغة الآلة
+  const apiDownloadUrl = `https://www.googleapis.com/drive/v3/files/${book?.id}?alt=media&key=${API_KEY}`;
 
   const [isFavorite, setIsFavorite] = useState(() => {
     try {
@@ -34,19 +41,35 @@ const BookCard = ({ book, selectedStage }) => {
     if (book?.id) navigate(`/read/${book.id}`, { state: { bookName: safeName } });
   };
 
-  const handleDownload = (e) => {
+  const handleDownload = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    // الطريقة الأصلية المريحة: تفتح نافذة اختيار حساب جوجل درايف مباشرة داخل التطبيق
-    window.open(downloadUrl, '_blank');
     
-    // تسجيل الكتاب فوراً في قسم التنزيلات في التطبيق
-    const savedBooks = JSON.parse(localStorage.getItem('manhaji_downloads') || '[]');
-    if (!savedBooks.some(b => b.id === book.id)) {
-      savedBooks.push(book);
-      localStorage.setItem('manhaji_downloads', JSON.stringify(savedBooks));
-      setIsSavedOffline(true);
+    if (isSavedOffline || isDownloading) return;
+
+    setIsDownloading(true);
+    try {
+      const fileName = `manhaji_${book.id}.pdf`;
+      
+      // التحميل الصامت في الخلفية وتخزينه في مساحة التطبيق الآمنة
+      await Filesystem.downloadFile({
+        url: apiDownloadUrl,
+        path: fileName,
+        directory: Directory.Data
+      });
+      
+      const savedBooks = JSON.parse(localStorage.getItem('manhaji_downloads') || '[]');
+      if (!savedBooks.some(b => b.id === book.id)) {
+        savedBooks.push(book);
+        localStorage.setItem('manhaji_downloads', JSON.stringify(savedBooks));
+        setIsSavedOffline(true);
+      }
+      alert('✅ تم سحب الكتاب بنجاح وحفظه في التنزيلات!');
+    } catch (error) {
+      console.error("خطأ في التحميل:", error);
+      alert('فشل التحميل. تأكد من اتصالك بالإنترنت وحاول مجدداً.');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -68,11 +91,7 @@ const BookCard = ({ book, selectedStage }) => {
   };
 
   return (
-    <div style={{
-      backgroundColor: 'var(--bg-white)', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-      overflow: 'hidden', transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.3s', 
-      display: 'flex', flexDirection: 'column', position: 'relative'
-    }}>
+    <div style={{ backgroundColor: 'var(--bg-white)', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', overflow: 'hidden', transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.3s', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <button onClick={toggleFavorite} style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10, background: 'rgba(255, 255, 255, 0.9)', border: 'none', borderRadius: '50%', width: '35px', height: '35px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
         {isFavorite ? '⭐' : '☆'}
       </button>
@@ -89,9 +108,9 @@ const BookCard = ({ book, selectedStage }) => {
         <p style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-darkGray)', margin: '0 0 15px 0', lineHeight: '1.4', textAlign: 'center' }}>{cleanName}</p>
         <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
           <button onClick={handleReadClick} style={{ padding: '10px', backgroundColor: '#166534', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>👁️ قراءة أونلاين</button>
-         
-          <button onClick={handleDownload} style={{ padding: '10px', backgroundColor: isSavedOffline ? '#4b5563' : '#f97316', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
-            {isSavedOffline ? '✅ متوفر في التنزيلات' : '📥 تحميل'}
+          
+          <button onClick={handleDownload} disabled={isSavedOffline || isDownloading} style={{ padding: '10px', backgroundColor: isSavedOffline ? '#4b5563' : (isDownloading ? '#fb923c' : '#f97316'), color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: isSavedOffline ? 'default' : 'pointer' }}>
+            {isDownloading ? '⏳ جاري التحميل بصمت...' : (isSavedOffline ? '✅ متوفر في التنزيلات' : '📥 تحميل للكتاب')}
           </button>
         </div>
       </div>
