@@ -15,9 +15,10 @@ const BookCard = ({ book, selectedStage }) => {
   const hasSanaa = safeName.includes('صنعاء');
   const hasAden = safeName.includes('عدن');
 
-  const API_KEY = 'AIzaSyCLrdrg_l6AALWm6VZa8ZHIG1LqoviG7cI';
+  // سحب المفتاح السري بأمان من ملف البيئة .env
+  const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
   
-  // تم إضافة acknowledgeAbuse=true لتخطي فحص الفيروسات للملفات الكبيرة وضمان نزولها كـ PDF
+  // الرابط مكتوب بسطر واحد سليم تماماً لتجنب أي أخطاء
   const apiDownloadUrl = `https://www.googleapis.com/drive/v3/files/${book?.id}?alt=media&key=${API_KEY}&acknowledgeAbuse=true`;
 
   const [isFavorite, setIsFavorite] = useState(() => {
