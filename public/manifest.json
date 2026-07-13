@@ -1,27 +1,60 @@
 {
-    "name": "تطبيق مَنهَجي - المناهج الدراسية اليمنية",
-    "short_name": "مَنهَجي",
-    "description": "تطبيق يمني متخصص في توفير المناهج الدراسية",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#1B5E20",
-    "orientation": "portrait-primary",
-    "scope": "/",
-    "icons": [
-      {
-        "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231B5E20' width='192' height='192'/><text x='96' y='120' font-size='100' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>📚</text></svg>",
-        "sizes": "192x192",
-        "type": "image/svg+xml",
-        "purpose": "any"
-      },
-      {
-        "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%231B5E20' width='512' height='512'/><text x='256' y='380' font-size='300' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>📚</text></svg>",
-        "sizes": "512x512",
-        "type": "image/svg+xml",
-        "purpose": "any maskable"
-      }
-    ],
-    "categories": ["education", "books"],
-    "prefer_related_applications": false
-  }
+  "name": "تطبيق مَنهَجي - المناهج الدراسية اليمنية",
+  "short_name": "مَنهَجي",
+  "description": "تطبيق يمني متخصص في توفير المناهج الدراسية",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1B5E20",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "../icons/icon-48.webp",
+      "type": "image/png",
+      "sizes": "48x48",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../icons/icon-72.webp",
+      "type": "image/png",
+      "sizes": "72x72",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../icons/icon-96.webp",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../icons/icon-128.webp",
+      "type": "image/png",
+      "sizes": "128x128",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../icons/icon-192.webp",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../icons/icon-256.webp",
+      "type": "image/png",
+      "sizes": "256x256",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../icons/icon-512.webp",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "education",
+    "books"
+  ],
+  "prefer_related_applications": false
+}
