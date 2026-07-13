@@ -1,6 +1,6 @@
 {
   "appId": "com.manhaji.app",
-  "appName": "مَنهَجي",
+  "appName": "منهجي",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "plugins": {
