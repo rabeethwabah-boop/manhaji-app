@@ -3,6 +3,17 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.manhaji.app"
     compileSdk = rootProject.ext.compileSdkVersion
+
+    // 🔑 إضافة إعدادات التوقيع الرقمي (الختم) هنا
+    signingConfigs {
+        release {
+            storeFile file("manhaji.keystore")
+            storePassword "Manhaji@2026"
+            keyAlias "manhaji"
+            keyPassword "Manhaji@2026"
+        }
+    }
+
     defaultConfig {
         applicationId "com.manhaji.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -20,6 +31,8 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // 🛡️ تفعيل الختم عند بناء النسخة النهائية
+            signingConfig signingConfigs.release
         }
     }
 }
