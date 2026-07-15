@@ -1,4 +1,4 @@
-name: Build Android Release AAB
+name: Build Android Release APK
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build AAB
+    name: Build APK
     runs-on: ubuntu-latest
 
     steps:
@@ -40,12 +40,12 @@ jobs:
       - name: Grant Execute Permission for Gradle
         run: chmod +x android/gradlew
 
-      - name: Build Release AAB
+      - name: Build Release APK
         working-directory: ./android
-        run: ./gradlew bundleRelease
+        run: ./gradlew assembleRelease
 
-      - name: Upload AAB
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Manhaji-App-AAB
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          name: Manhaji-App-Release-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
